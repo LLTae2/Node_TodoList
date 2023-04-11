@@ -49,6 +49,23 @@ app.post("/todos", (req, res) => {
   );
 });
 
+app.put("/todos", (req, res) => {
+  const { title, description } = req.body;
+
+  connection.query(
+    "UPDATE todos SET title = ?, description = ?",
+    [title, description],
+    (error, result) => {
+      if (error) {
+        console.error(error);
+        res.status(500).send("Internal server error");
+      } else {
+        res.json({ id: result.insertId, title, description });
+      }
+    }
+  );
+});
+
 app.listen(3000, () => {
   console.log("Server is listening on port 3000");
 });
