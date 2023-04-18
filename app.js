@@ -21,7 +21,7 @@ connection.connect((err) => {
   console.log("connected as id " + connection.threadId);
 });
 
-app.get("/todos", (req, res) => {
+app.get("/getTodos", (req, res) => {
   connection.query("SELECT * FROM todos", (error, results) => {
     if (error) {
       console.error(error);
@@ -32,12 +32,27 @@ app.get("/todos", (req, res) => {
   });
 });
 
-app.post("/todos", (req, res) => {
-  const { title, description } = req.body;
+app.delete("/deleteTodos/:id", (req, res) => {
+  const id = req.params.id;
+
+  connection.query("DELETE FROM todos WHERE id = ?", [id], (error, result) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send("Internal server error");
+    } else if (result.affectedRows === 0) {
+      res.status(404).send("삭제할 투두가 없음");
+    } else {
+      res.json({ id });
+    }
+  });
+});
+
+app.post("/addTodos", (req, res) => {
+  const { id, title, description, complete } = req.body;
 
   connection.query(
-    "INSERT INTO todos (title, description) VALUES (?, ?)",
-    [title, description],
+    "INSERT INTO todos (id, title, description, complete) VALUES (?, ?, ?, ?)",
+    [id, title, description, complete],
     (error, result) => {
       if (error) {
         console.error(error);
@@ -49,18 +64,22 @@ app.post("/todos", (req, res) => {
   );
 });
 
-app.put("/todos", (req, res) => {
-  const { title, description } = req.body;
-
+app.put("/modifyTodos", (req, res) => {
+  const { title, description, complete, id } = req.body;
   connection.query(
-    "UPDATE todos SET title = ?, description = ?",
-    [title, description],
+    "UPDATE todos SET title = ?, description = ?, complete = ?  WHERE id = ?",
+    [title, description, complete, id],
     (error, result) => {
       if (error) {
-        console.error(error);
+        console.log(error);
         res.status(500).send("Internal server error");
       } else {
-        res.json({ id: result.insertId, title, description });
+        res.json({
+          id: result.id,
+          title: result.title,
+          description: result.description,
+          complete: result.complete,
+        });
       }
     }
   );
